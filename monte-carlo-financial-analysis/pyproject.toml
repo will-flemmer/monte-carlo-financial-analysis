@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "monte-carlo-financial-analysis"
+version = "0.1.0"
+description = ""
+authors = ["William Flemmer <flemmerwill@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+yfinance = "^0.2.37"
+matplotlib = "^3.8.4"
+pandas = "^2.2.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

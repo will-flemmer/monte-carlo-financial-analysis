@@ -27,10 +27,8 @@ class OptionSimulation():
   def __init__(self, stock, timedelta):
     self.store_stock_data(stock)
     self.expiration_date = find_closest_expiration_date(datetime.now() + timedelta, self.stock.options)
-
     self.start_date = datetime.now()
     self.timedelta = self.expiration_date - self.start_date
-    self.expiration_date = self.start_date + self.timedelta
 
     self.number_of_time_steps = 100
     self.dt_days = timedelta.days / self.number_of_time_steps  # time delta

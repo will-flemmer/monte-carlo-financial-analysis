@@ -6,10 +6,30 @@ import pandas as pd
 
 ANNUAL_RISK_FREE_RATE = 0.03
 
+def find_closest_expiration_date(expiration_date, option_dates):
+  date_format = "%Y-%m-%d"
+
+  current_closest_date = None
+  for date_string in option_dates:
+    datetime_obj = datetime.strptime(date_string, date_format)
+    if current_closest_date == None:
+      current_closest_date = datetime_obj
+      continue
+    if abs(current_closest_date - expiration_date) > abs(datetime_obj - expiration_date):
+      current_closest_date = datetime_obj
+  
+  if abs(current_closest_date - expiration_date).days > 365:
+    raise Exception('The closest option date is not in the same year as the provided date. Please choose a different time period')
+  return current_closest_date
+
+
 class OptionSimulation():
   def __init__(self, stock, timedelta):
+    self.store_stock_data(stock)
+    self.expiration_date = find_closest_expiration_date(datetime.now() + timedelta, self.stock.options)
+
     self.start_date = datetime.now()
-    self.timedelta = timedelta
+    self.timedelta = self.expiration_date - self.start_date
     self.expiration_date = self.start_date + self.timedelta
 
     self.number_of_time_steps = 100
@@ -17,7 +37,7 @@ class OptionSimulation():
     self.price_path_dataframes = []
     self.discounted_payoffs = []
 
-    self.store_stock_data(stock)
+    self.set_option()
     self.calculate_expected_return_per_day()
     self.calculate_volatility_per_day()
     print(f"init simulation for {stock}, expiring on {self.expiration_date}")
@@ -71,16 +91,15 @@ class OptionSimulation():
   def store_stock_data(self, stock):
     self.stock = yf.Ticker(stock)
     self.s0 = self.stock.info['currentPrice']
-    expiration_date = (self.start_date + self.timedelta).strftime('%Y-%m-%d')
-    option_df = self.stock.option_chain(expiration_date).calls
-    self.option = self.choose_option(option_df)
 
-  def choose_option(self, option_df):
+  def set_option(self):
     # this method can be improved later, for now we just take the median option.
     # We could loop through each option and find the present value of each
+    expiration_date = (self.start_date + self.timedelta).strftime('%Y-%m-%d')
+    option_df = self.stock.option_chain(expiration_date).calls
     sorted_df = option_df.sort_values('strike')
     midpoint = round(len(sorted_df) / 2)
-    return sorted_df.iloc[midpoint]
+    self.option = sorted_df.iloc[midpoint]
 
   def plot_price_paths(self, show_all_paths=False):
     assert(len(self.price_path_dataframes) > 0)
@@ -88,8 +107,8 @@ class OptionSimulation():
       for df in self.price_path_dataframes:
         plt.plot(df['date'], df['price'])
     
-    strike_line = np.full((self.number_of_time_steps + 1,), self.option['strike'])
-    plt.plot(self.mean_df['date'], strike_line, label='Strike Price')
+    strike_line = np.full((self.number_of_time_steps + 1,), self.option['strike'] + self.option['ask'])
+    plt.plot(self.mean_df['date'], strike_line, label='Strike Price + Ask Price')
     plt.plot(self.mean_df['date'], self.mean_df['price'], label='Expected Stock Price')
     
     plt.title("Expected Stock Price Vs Time")

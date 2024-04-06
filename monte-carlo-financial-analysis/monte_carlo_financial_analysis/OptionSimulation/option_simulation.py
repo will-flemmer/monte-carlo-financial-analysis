@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import pandas as pd
 
+ANNUAL_RISK_FREE_RATE = 0.03
+
 class OptionSimulation():
   def __init__(self, stock, timedelta):
     self.start_date = datetime.now()
@@ -13,6 +15,7 @@ class OptionSimulation():
     self.number_of_time_steps = 100
     self.dt_days = timedelta.days / self.number_of_time_steps  # time delta
     self.price_path_dataframes = []
+    self.discounted_payoffs = []
 
     self.store_stock_data(stock)
     self.calculate_expected_return_per_day()
@@ -20,11 +23,14 @@ class OptionSimulation():
     print(f"init simulation for {stock}, expiring on {self.expiration_date}")
   
   def simulate_multiple_paths(self):
-    for _ in range(20):
+    for _ in range(200):
       result_df = self.simulate_price_path()
+      self.calculate_discounted_payoff(result_df)
       self.price_path_dataframes.append(result_df)
     concat_df = pd.concat(self.price_path_dataframes)
     self.mean_df = concat_df.groupby('date').mean().reset_index()
+    expected_present_value = np.mean(self.discounted_payoffs)
+    print(f"Expected present value of option: {expected_present_value}")
 
 
   def simulate_price_path(self):
@@ -45,13 +51,23 @@ class OptionSimulation():
     drift = self.expected_return_over_time_period * price_df.tail(1)['price'] * self.dt_days
     shock = self.volatility_over_time_period * price_df.tail(1)['price'] * np.sqrt(self.dt_days) * np.random.normal()
     return drift + shock
+  
+  def calculate_discounted_payoff(self, price_path_df):
+    payoff = price_path_df['price'].max() - self.option['strike'] - self.option['ask']
+    discounted_payoff = payoff / (1 + ANNUAL_RISK_FREE_RATE) ** (self.timedelta.days / 365)
+    self.discounted_payoffs.append(discounted_payoff)
 
   def calculate_volatility_per_day(self):
     self.volatility_over_time_period = self.daily_returns().std()
 
   def calculate_expected_return_per_day(self):
-    self.expected_return_over_time_period = self.daily_returns().mean()
+    self.expected_return_over_time_period = self.daily_returns().mean()  
 
+  def daily_returns(self):
+    period = f'{self.timedelta.days}d'
+    hist = self.stock.history(period=period)
+    return hist['Close'].pct_change().dropna()
+  
   def store_stock_data(self, stock):
     self.stock = yf.Ticker(stock)
     self.s0 = self.stock.info['currentPrice']
@@ -60,23 +76,22 @@ class OptionSimulation():
     self.option = self.choose_option(option_df)
 
   def choose_option(self, option_df):
-    # this method can be improved later, for now we just take the median option
+    # this method can be improved later, for now we just take the median option.
+    # We could loop through each option and find the present value of each
     sorted_df = option_df.sort_values('strike')
     midpoint = round(len(sorted_df) / 2)
     return sorted_df.iloc[midpoint]
-  
-
-  def daily_returns(self):
-    period = f'{self.timedelta.days}d'
-    hist = self.stock.history(period=period)
-    return hist['Close'].pct_change().dropna()
 
   def plot_price_paths(self, show_all_paths=False):
     assert(len(self.price_path_dataframes) > 0)
     if show_all_paths:
       for df in self.price_path_dataframes:
         plt.plot(df['date'], df['price'])
-    plt.plot(self.mean_df['date'], self.mean_df['price'], label='Mean')
+    
+    strike_line = np.full((self.number_of_time_steps + 1,), self.option['strike'])
+    plt.plot(self.mean_df['date'], strike_line, label='Strike Price')
+    plt.plot(self.mean_df['date'], self.mean_df['price'], label='Expected Stock Price')
+    
     plt.title("Expected Stock Price Vs Time")
     plt.xlabel("Date")
     plt.ylabel("Stock Price")

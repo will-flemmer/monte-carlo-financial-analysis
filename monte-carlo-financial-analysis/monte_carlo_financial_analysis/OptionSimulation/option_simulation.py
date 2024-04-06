@@ -30,8 +30,8 @@ class OptionSimulation():
     self.start_date = datetime.now()
     self.timedelta = self.expiration_date - self.start_date
 
-    self.number_of_time_steps = 100
-    self.dt_days = timedelta.days / self.number_of_time_steps  # time delta
+    self.number_of_time_steps = timedelta.days
+    self.dt_days = 1
     self.price_path_dataframes = []
     self.discounted_payoffs = []
 

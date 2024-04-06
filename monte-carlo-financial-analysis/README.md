@@ -9,7 +9,7 @@ A project which uses monte carlo simulation to predict option pricing for Europe
 - We simulate multiple paths from the current date to the expiration date of the option to find stock_price_at_expiration
 
 #### Expected Payoff Calculation
-1. Calculate the payoff for a path we do: payoff = stock_price_at_expiration - strike_price
+1. Calculate the payoff for a path: payoff = stock_price_at_expiration - strike_price
 2. Calculate the expected_payoff we average the payoffs of each of the paths
 3. Calculate the present_value of the of the average payoff: present_value =  expected_payoff / ((1 + risk_free_rate) ** years_to_expiration)
 

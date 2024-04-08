@@ -27,3 +27,6 @@ This project uses [poetry](https://python-poetry.org/docs/) for dependency manag
 3. `poetry install`
 4. In the top level directory: `./run`
 5. Change the parameters in `monte_carlo_financial_analysis/main.py`
+
+### Running tests
+Unit tests can be run using poetry: `poetry run pytest`

@@ -1,5 +1,5 @@
 # Monte Carlo Option Prediction
-A project which uses monte carlo simulation to predict option pricing.
+A project which uses monte carlo simulation to predict option pricing. For documentation see [this section](#documentation)
 
 ### Assumptions
 - We will only be simulating call options (for now)
@@ -17,3 +17,13 @@ A project which uses monte carlo simulation to predict option pricing.
 ### Visualisation Ideas
 - Plot the present_value of an option against time
 - For 3 stock options, plot present_value vs time
+
+# Documentation
+This project uses [poetry](https://python-poetry.org/docs/) for dependency management and to run the project. Please install it before running the simulation.
+
+### Getting Started
+1. Clone this repo
+2. Install [poetry](https://python-poetry.org/docs/)
+3. `poetry install`
+4. In the top level directory: `./run`
+5. Change the parameters in `monte_carlo_financial_analysis/main.py`
